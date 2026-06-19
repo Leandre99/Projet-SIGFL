@@ -13,6 +13,6 @@ spring:
 
 logging:
   level:
-    org.example.sigfl_backend: DEBUG
+    bj.mef.sigfl_backend: DEBUG
     org.testcontainers: INFO
     com.github.dockerjava: WARN

@@ -8,7 +8,7 @@ blueprint for new ones.
 ## Package layout
 
 ```
-org.example.sigfl_backend
+bj.mef.sigfl_backend
 ├── SigflBackendApplication        # entry point (@ConfigurationPropertiesScan)
 │
 ├── shared/                        # cross-cutting code reused by every module
@@ -71,7 +71,7 @@ invoice/
 ├── application/
 │   ├── dto/InvoiceRequest.java     # inbound DTO (Bean Validation)
 │   ├── dto/InvoiceResponse.java    # outbound DTO
-│   ├── mapper/InvoiceMapper.java   # MapStruct entity <-> DTO (generated impl)
+│   ├── mapper/InvoiceMapper.java   # plain @Component: entity <-> DTO
 │   └── InvoiceService.java         # use cases, @Transactional
 └── api/InvoiceController.java      # REST, @Valid, @PreAuthorize for ADMIN
 ```
@@ -80,21 +80,27 @@ Endpoints: `GET/POST /api/invoices`, `GET/PUT/DELETE /api/invoices/{id}`
 (`DELETE` requires the `ADMIN` realm role). Backed by Flyway migration
 `db/migration/V2__invoice.sql`.
 
-### Mapping (MapStruct)
+### Mapping (plain Java)
 
-Entity ⇄ DTO mapping uses **MapStruct** — interfaces annotated `@Mapper(componentModel = "spring")`;
-implementations are generated at compile time (see
-`target/generated-sources/annotations/...`) and injected as Spring beans.
-MapStruct is wired to run *after* Lombok via `lombok-mapstruct-binding` in the
-compiler's annotation processors, so it sees Lombok-generated getters/setters
-(including those inherited from `BaseEntity`). Never hand-write mapping code.
+Entity ⇄ DTO mapping is a **hand-written `@Component`** — no library, no code
+generation, fully explicit and compiler-checked. Each mapper exposes the same
+method set, copy it as-is:
+
+- `toResponse(entity)` — entity → response DTO
+- `toList(entities)` — list of entities → list of response DTOs
+- `toEntity(request)` — request DTO → new entity (create)
+- `updateEntity(request, entity)` — copy non-null fields onto an existing entity (update)
+
+The service injects the mapper and calls these methods; controllers never see
+entities. When a copy becomes tedious, that's the moment to consider a mapping
+library — not before.
 
 ### Adding a new module
 
 1. `mymod/domain/model/Foo.java` extending `shared.domain.BaseEntity`.
 2. Port `mymod/domain/FooRepository.java` (extend `JpaRepository`).
 3. DTOs `mymod/application/dto/FooRequest.java` + `FooResponse.java`.
-4. `mymod/application/mapper/FooMapper.java` (`@Mapper(componentModel = "spring")`).
+4. `mymod/application/mapper/FooMapper.java` (plain `@Component`, the 4 methods above).
 5. Use cases in `mymod/application/FooService.java`.
 6. REST in `mymod/api/FooController.java` (DTOs in/out, never entities).
 7. Flyway migration `db/migration/V3__foo.sql`.

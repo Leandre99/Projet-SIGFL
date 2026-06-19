@@ -41,4 +41,4 @@ springdoc:
 logging:
   level:
     root: INFO
-    org.example.sigfl_backend: INFO
+    bj.mef.sigfl_backend: INFO
