@@ -1,0 +1,40 @@
+{
+  "realm": "sigfl",
+  "enabled": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 1800,
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "USER", "description": "Standard application user" },
+      { "name": "ADMIN", "description": "Administrator" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "sigfl-app",
+      "name": "SIGFL application client",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:8080/*", "http://localhost:3000/*"],
+      "webOrigins": ["*"],
+      "protocol": "openid-connect"
+    }
+  ],
+  "users": [
+    {
+      "username": "dev",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "dev@sigfl.local",
+      "firstName": "Dev",
+      "lastName": "User",
+      "credentials": [
+        { "type": "password", "value": "dev", "temporary": false }
+      ],
+      "realmRoles": ["USER", "ADMIN"]
+    }
+  ]
+}
