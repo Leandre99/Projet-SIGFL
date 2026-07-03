@@ -27,6 +27,13 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+        # Envers history tables (Invoice_aud, ...) live in their own schema,
+        # away from the application's public schema. Tables are Flyway-managed
+        # (see db/migration), same as every other table — ddl-auto stays "validate".
+        org:
+          hibernate:
+            envers:
+              default_schema: audit
 
   flyway:
     enabled: true
@@ -51,9 +58,15 @@ spring:
           starttls:
             enable: ${MAIL_SMTP_STARTTLS:false}
 
-# Note: the OAuth2 resource-server issuer-uri (Keycloak) is set per-profile in
-# application-dev.yml / application-prod.yml — it is intentionally absent in the
-# test profile, which runs without Keycloak.
+# Note: the OAuth2 resource-server issuer-uri/jwk-set-uri (Keycloak) are set
+# per-profile in application-dev.yml / application-prod.yml — intentionally
+# absent in the test profile, which runs without Keycloak.
+
+app:
+  cors:
+    # Comma-separated list. Default matches the SPA client redirect URIs
+    # declared in docker/keycloak/realm-sigfl.json.
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
 
 # =========================================================================
 # Application modules

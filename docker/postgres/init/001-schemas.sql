@@ -1,0 +1,14 @@
+-- Runs once, only when the Postgres data volume is first initialized
+-- (docker-entrypoint-initdb.d scripts are skipped on an existing volume).
+--
+-- Schemas:
+--   public    application tables (Flyway-managed, see src/main/resources/db/migration)
+--   keycloak  Keycloak's own tables (Keycloak manages/migrates this schema itself
+--             via its embedded Liquibase — it only needs the schema to pre-exist)
+--   audit     Hibernate Envers history tables — created by Flyway
+--             (V3__audit_schema.sql), not here, since Flyway is the schema
+--             owner in every environment, not just this local docker-compose one.
+--
+-- No explicit AUTHORIZATION: this script runs as POSTGRES_USER, which already
+-- owns whatever it creates.
+CREATE SCHEMA IF NOT EXISTS keycloak;

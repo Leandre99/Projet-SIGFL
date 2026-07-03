@@ -4,11 +4,17 @@
 # =========================================================================
 spring:
   # Validate bearer tokens against the local Keycloak realm (docker-compose).
+  # issuer-uri: what clients see and what ends up in the token's "iss" claim
+  #             (defaults to Keycloak's published host:port).
+  # jwk-set-uri: where *this app* fetches signing keys from — same host by
+  #             default, but overridden to the internal compose DNS name
+  #             (keycloak:8080) when the app itself also runs inside compose.
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/sigfl}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs}
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:6432/sigfl}
     username: ${DB_USERNAME:sigfl}

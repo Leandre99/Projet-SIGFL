@@ -24,6 +24,8 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      # Creates the keycloak/audit schemas on first boot (empty volume only).
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sigfl} -d ${POSTGRES_DB:-sigfl}"]
       interval: 10s
@@ -35,10 +37,24 @@ services:
     container_name: sigfl-keycloak
     restart: unless-stopped
     command: ["start-dev", "--import-realm"]
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       KC_HTTP_PORT: 8080
+      # Persist realm/user data in the sigfl Postgres instance instead of the
+      # ephemeral embedded H2 — own schema, managed by Keycloak's own Liquibase
+      # migrations (the "keycloak" schema itself is created by
+      # docker/postgres/init/001-schemas.sql on first DB boot).
+      KC_DB: postgres
+      KC_DB_URL_HOST: db
+      KC_DB_URL_PORT: "5432"
+      KC_DB_URL_DATABASE: ${POSTGRES_DB:-sigfl}
+      KC_DB_SCHEMA: keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER:-sigfl}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-sigfl}
     ports:
       - "${KEYCLOAK_PORT:-8081}:8080"
     volumes:
@@ -101,8 +117,12 @@ services:
       DB_USERNAME: ${POSTGRES_USER:-sigfl}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-sigfl}
       SERVER_PORT: ${SERVER_PORT:-8080}
-      # Auth (Keycloak). Issuer host must match the one in tokens; keycloak:8080 here.
-      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/${KEYCLOAK_REALM:-sigfl}
+      # Auth (Keycloak). issuer-uri must be the host clients actually use to reach
+      # Keycloak (it must match the "iss" claim baked into their tokens) — that's
+      # the published port, reachable from the host machine. jwk-set-uri is
+      # fetched by *this container*, so it uses the internal compose network name.
+      KEYCLOAK_ISSUER_URI: http://localhost:${KEYCLOAK_PORT:-8081}/realms/${KEYCLOAK_REALM:-sigfl}
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/${KEYCLOAK_REALM:-sigfl}/protocol/openid-connect/certs
       # Storage (MinIO via S3 API).
       STORAGE_PROVIDER: s3
       STORAGE_S3_ENDPOINT: http://minio:9000
