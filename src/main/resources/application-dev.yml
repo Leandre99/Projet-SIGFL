@@ -10,7 +10,7 @@ spring:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/sigfl}
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/sigfl}
+    url: ${DB_URL:jdbc:postgresql://localhost:6432/sigfl}
     username: ${DB_USERNAME:sigfl}
     password: ${DB_PASSWORD:sigfl}
   jpa:

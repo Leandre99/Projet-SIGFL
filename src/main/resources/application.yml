@@ -9,6 +9,9 @@ spring:
   profiles:
     # Run with the "dev" profile unless SPRING_PROFILES_ACTIVE says otherwise.
     default: dev
+  config:
+    # Load .env from the working directory as a low-priority property source.
+    import: optional:file:.env[.properties]
 
   datasource:
     url: ${DB_URL}
