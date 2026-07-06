@@ -1,4 +1,4 @@
-package bj.mef.sigfl_backend.invoice.domain.port;
+package bj.mef.sigfl_backend.invoice.domain.port.out;
 
 import java.math.BigDecimal;
 import java.util.Currency;
